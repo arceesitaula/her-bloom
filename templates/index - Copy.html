@@ -1,0 +1,544 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CycleCare</title>
+<style>
+:root {
+  --pink: #bd6688;
+  --pale: #fff2f6;
+  --ink: #352936;
+  --muted: #766b77;
+  --line: #f0dce5;
+  --white: #ffffff;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: Arial, sans-serif; color: var(--ink);
+  background: #fff8fb;
+}
+header {
+  padding: 25px 7%; color: white;
+  background: linear-gradient(120deg, #9e5076, #d98ca8);
+}
+header h1 { margin: 0 0 7px; font-size: 30px; }
+header p { margin: 0; opacity: .92; }
+nav {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  padding: 15px 7%; background: white;
+  border-bottom: 1px solid var(--line);
+}
+nav button, button {
+  cursor: pointer; border: 0; border-radius: 10px;
+  padding: 11px 15px; font-weight: bold;
+}
+nav button { background: var(--pale); color: var(--ink); }
+nav button.active, .primary { background: var(--pink); color: white; }
+main { max-width: 1050px; margin: 25px auto; padding: 0 18px 40px; }
+.panel {
+  background: white; border: 1px solid var(--line);
+  border-radius: 18px; padding: 23px; margin-bottom: 20px;
+}
+h2 { margin-top: 0; }
+h3 { margin-bottom: 8px; }
+p, .hint { line-height: 1.55; }
+.hint { color: var(--muted); font-size: 14px; }
+.grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 15px; }
+label { display: block; font-weight: bold; margin-bottom: 6px; }
+input, select, textarea {
+  width: 100%; padding: 11px; border: 1px solid #dfcbd5;
+  border-radius: 9px; font: inherit; background: white;
+}
+textarea { min-height: 75px; resize: vertical; }
+.field { margin-bottom: 15px; }
+.checks { display: flex; flex-wrap: wrap; gap: 12px; }
+.checks label { font-weight: normal; }
+.checks input { width: auto; }
+.entry {
+  border: 1px solid var(--line); padding: 15px;
+  border-radius: 12px; margin-top: 12px;
+}
+.entry button { margin-top: 10px; background: var(--pale); }
+.result { padding: 17px; border-radius: 12px; background: var(--pale); margin-top: 16px; }
+.hidden { display: none; }
+.notice { background: #fff6e7; border-radius: 10px; padding: 12px; }
+@media(max-width:650px) { .grid { grid-template-columns: 1fr; } }
+
+/* CycleCare aesthetic upgrade */
+body {
+  background: linear-gradient(145deg, #fff8fb 0%, #f8eef4 55%, #fffaf5 100%);
+  color: #382738;
+  font-family: 'Trebuchet MS', Arial, sans-serif;
+}
+header {
+  padding: 36px 7%;
+  background: linear-gradient(120deg, #75415f 0%, #b66d91 55%, #e0a2b7 100%);
+}
+header h1 { font-size: clamp(30px, 4vw, 43px); letter-spacing: -1px; }
+header p { font-size: 15px; }
+nav {
+  position: sticky; top: 0; z-index: 10;
+  padding: 13px 7%; box-shadow: 0 5px 20px #6e3b5510;
+}
+nav button, button {
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+nav button:hover, button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px #9c547520;
+}
+nav button.active, .primary {
+  background: linear-gradient(120deg, #9c5579, #c77f9e);
+}
+main { max-width: 1120px; margin: 32px auto; }
+.panel {
+  border: 1px solid #efdce6;
+  border-radius: 22px;
+  padding: clamp(20px, 4vw, 32px);
+  box-shadow: 0 12px 35px #70445a0a;
+  margin-bottom: 23px;
+}
+h2 { letter-spacing: -.4px; color: #633d56; }
+input, select, textarea {
+  border-color: #e6cedb;
+  background: #fffdfd;
+  transition: border .2s, box-shadow .2s;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: #bb7898;
+  box-shadow: 0 0 0 3px #dca9c52b;
+}
+.entry {
+  border-radius: 15px;
+  background: linear-gradient(120deg, #fffafd, #fff6f9);
+  border-color: #f0dce6;
+}
+.result {
+  border: 1px solid #ebd4e0;
+  background: linear-gradient(135deg, #fff3f8, #f8eff8);
+  line-height: 1.7;
+}
+.metric-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 12px; margin: 18px 0;
+}
+.metric {
+  background: #fff7fa; border: 1px solid #efdce6;
+  border-radius: 15px; padding: 16px;
+}
+.metric strong { display: block; font-size: 25px; color: #985778; margin-top: 6px; }
+.chart-wrap {
+  margin-top: 18px; padding: 16px; border: 1px solid #efdce6;
+  border-radius: 16px; background: #fffafd;
+}
+#cycleChart { display: block; width: 100%; height: 230px; }
+.small-button { margin: 0 0 16px; background: #f8e8f0; color: #633d56; }
+@media(max-width: 600px) {
+  header { padding: 28px 6%; }
+  nav { padding: 12px 5%; }
+  nav button { padding: 10px; }
+  .metric-grid { grid-template-columns: 1fr 1fr; }
+}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>♡ CycleCare</h1>
+  <p>Your period diary and cycle insights</p>
+</header>
+<nav>
+  <button class="active" data-page="diary">Period diary</button>
+  <button data-page="estimate">PCOS risk estimate</button>
+  <button data-page="about">About CycleCare</button>
+</nav>
+
+<main>
+<section id="diary" class="page">
+  <div class="panel">
+    <h2>Log your period</h2>
+    <p class="hint">Your diary entries are stored in this browser on this device.</p>
+    <form id="periodForm">
+      <div class="grid">
+        <div class="field">
+          <label for="start">Period start date</label>
+          <input id="start" type="date" required>
+        </div>
+        <div class="field">
+          <label for="end">Period end date</label>
+          <input id="end" type="date" required>
+        </div>
+        <div class="field">
+          <label for="flow">Flow level</label>
+          <select id="flow"><option>Light</option><option selected>Medium</option><option>Heavy</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Symptoms</label>
+        <div class="checks">
+          <label><input type="checkbox" name="symptom" value="Cramps"> Cramps</label>
+          <label><input type="checkbox" name="symptom" value="Acne"> Acne</label>
+          <label><input type="checkbox" name="symptom" value="Headache"> Headache</label>
+          <label><input type="checkbox" name="symptom" value="Bloating"> Bloating</label>
+          <label><input type="checkbox" name="symptom" value="Hair loss"> Hair loss</label>
+          <label><input type="checkbox" name="symptom" value="Excess hair growth"> Unusual coarse facial/body hair growth</label>
+          <label><input type="checkbox" name="symptom" value="Fatigue"> Fatigue</label>
+          <label><input type="checkbox" name="symptom" value="Mood changes"> Mood changes</label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="notes">Notes (optional)</label>
+        <textarea id="notes" placeholder="Anything you want to record..."></textarea>
+      </div>
+      <button class="primary" type="submit">Save period</button>
+      <button type="reset">Clear form</button>
+      <p id="saveMessage" class="hint" role="status"></p>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Cycle insights</h2>
+    <div id="insights">Add period start dates to see your recorded cycle intervals.</div>
+<div class="chart-wrap">
+  <h3>Cycle interval trend</h3>
+  <p class="hint">Days between recorded period start dates. More entries help reveal a pattern.</p>
+  <canvas id="cycleChart" height="230"></canvas>
+</div>
+
+    <p class="hint">Cycle interval means the number of days between consecutive period start dates. Estimates are not a diagnosis.</p>
+  </div>
+  <div class="panel">
+    <h2>Period history</h2>
+    <div id="history">No periods recorded yet.</div>
+    <button id="clearHistory">Delete all history</button>
+  </div>
+</section>
+
+<section id="estimate" class="page hidden">
+  <div class="panel">
+    <h2>PCOS risk estimator</h2>
+    <p class="hint">Complete all fields using the information requested below. This estimate is for an educational project, not a medical diagnosis or a clinically validated screening test.</p>
+    <form id="predictionForm">
+<button type="button" class="small-button" id="useDiarySymptoms">
+  Use matching symptoms from my diary
+</button>
+<p class="hint" id="syncMessage">
+  This only suggests matching symptom fields from your latest diary entry.
+  Review the selections before estimating.
+</p>
+
+      <div class="grid">
+        <div class="field">
+          <label for="age">Age (years)</label>
+          <input id="age" type="number" min="1" max="100" required>
+        </div>
+        <div class="field">
+          <label for="cycle">Cycle regularity (dataset code)</label>
+          <select id="cycle" required>
+            <option value="">Choose</option>
+            <option value="2">2 — Regular</option>
+            <option value="4">4 — Irregular</option>
+          </select>
+          <p class="hint">These labels assume the dataset coding is 2 = regular and 4 = irregular. Verify against your dataset instructions.</p>
+        </div>
+        <div class="field">
+          <label for="duration">Bleeding duration (days)</label>
+          <input id="duration" type="number" min="1" max="30" required>
+          <p class="hint">Corresponds to the training column “Cycle length(days)”; it is not the interval between periods.</p>
+        </div>
+        <div class="field">
+          <label for="weightGain">Weight gain</label>
+          <select id="weightGain" class="binary" required><option value="">Choose</option><option value="1">Yes</option><option value="0">No</option></select>
+        </div>
+        <div class="field">
+          <label for="hairGrowth">Excess hair growth</label>
+          <select id="hairGrowth" class="binary" required><option value="">Choose</option><option value="1">Yes</option><option value="0">No</option></select>
+        </div>
+        <div class="field">
+          <label for="skin">Skin darkening</label>
+          <select id="skin" class="binary" required><option value="">Choose</option><option value="1">Yes</option><option value="0">No</option></select>
+        </div>
+        <div class="field">
+          <label for="hairLoss">Hair loss</label>
+          <select id="hairLoss" class="binary" required><option value="">Choose</option><option value="1">Yes</option><option value="0">No</option></select>
+        </div>
+        <div class="field">
+          <label for="pimples">Pimples</label>
+          <select id="pimples" class="binary" required><option value="">Choose</option><option value="1">Yes</option><option value="0">No</option></select>
+        </div>
+        <div class="field">
+          <label for="fastFood">Fast food</label>
+          <select id="fastFood" class="binary" required><option value="">Choose</option><option value="1">Yes</option><option value="0">No</option></select>
+        </div>
+        <div class="field">
+          <label for="exercise">Regular exercise</label>
+          <select id="exercise" class="binary" required><option value="">Choose</option><option value="1">Yes</option><option value="0">No</option></select>
+        </div>
+      </div>
+      <button class="primary" type="submit">Estimate</button>
+    </form>
+    <div id="predictionResult" class="result hidden" aria-live="polite"></div>
+  </div>
+</section>
+
+<section id="about" class="page hidden">
+  <div class="panel">
+    <h2>About CycleCare</h2>
+    <p>CycleCare is a student project combining a period diary with a machine-learning demonstration.</p>
+<div class="chart-wrap">
+  <h3>Model performance</h3>
+  <p class="hint">Scores from the held-out test set used during model evaluation. These measure performance on that dataset, not clinical accuracy.</p>
+  <div class="metric-grid">
+    <div class="metric">Accuracy<strong>86.2%</strong></div>
+    <div class="metric">Precision<strong>83.9%</strong></div>
+    <div class="metric">Recall<strong>72.2%</strong></div>
+    <div class="metric">F1 score<strong>77.6%</strong></div>
+  </div>
+</div>
+
+    <p>A period tracker and this model cannot diagnose PCOS. A model estimate is not a personal medical risk assessment and should not be used to make treatment decisions.</p>
+    <p>If you have irregular or missed periods or other concerns, speak with a qualified healthcare professional.</p>
+    <p class="hint">Diary entries are saved in this browser only. The prediction form sends its inputs to the local demo server to calculate the estimate; do not enter identifying or sensitive information.</p>
+  </div>
+</section>
+</main>
+
+<script>
+const storageKey = "cyclecare_combined_periods_v1";
+let periods = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+document.querySelectorAll("nav button").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+    button.classList.add("active");
+    document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
+    document.getElementById(button.dataset.page).classList.remove("hidden");
+  });
+});
+
+function daysBetween(a, b) {
+  const start = new Date(a + "T12:00:00");
+  const end = new Date(b + "T12:00:00");
+  return Math.round((end - start) / 86400000);
+}
+
+function savePeriods() {
+  localStorage.setItem(storageKey, JSON.stringify(periods));
+  renderPeriods();
+}
+
+function renderPeriods() {
+  const sorted = [...periods].sort((a,b) => b.start.localeCompare(a.start));
+  const history = document.getElementById("history");
+  if (!sorted.length) {
+    history.textContent = "No periods recorded yet.";
+  } else {
+    history.innerHTML = "";
+    sorted.forEach(entry => {
+      const div = document.createElement("div");
+      div.className = "entry";
+      const title = document.createElement("strong");
+      title.textContent = entry.start + " to " + entry.end;
+      const details = document.createElement("p");
+      details.textContent =
+        "Bleeding duration: " + (daysBetween(entry.start, entry.end) + 1) +
+        " day(s) · Flow: " + entry.flow +
+        " · Symptoms: " + (entry.symptoms.join(", ") || "None") +
+        (entry.notes ? " · Notes: " + entry.notes : "");
+      const del = document.createElement("button");
+      del.textContent = "Delete entry";
+      del.addEventListener("click", () => {
+        periods = periods.filter(p => p.id !== entry.id);
+        savePeriods();
+      });
+      div.append(title, details, del);
+      history.appendChild(div);
+    });
+  }
+
+  const starts = [...new Set(periods.map(p => p.start))].sort();
+  const intervals = [];
+  for (let i = 1; i < starts.length; i++) {
+    intervals.push(daysBetween(starts[i-1], starts[i]));
+  }
+  const insight = document.getElementById("insights");
+  if (!intervals.length) {
+    insight.textContent = "Record at least two different period start dates to calculate a cycle interval.";
+  } else {
+    const average = intervals.reduce((a,b) => a+b, 0) / intervals.length;
+    insight.textContent = "Recorded cycle lengths: " + intervals.join(", ") +
+      " days. Average: " + average.toFixed(1) + " days.";
+  }
+}
+
+document.getElementById("periodForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const start = document.getElementById("start").value;
+  const end = document.getElementById("end").value;
+  if (end < start) {
+    alert("The end date cannot be before the start date.");
+    return;
+  }
+  const duration = daysBetween(start, end) + 1;
+  if (duration > 10 && !confirm("This entry records " + duration +
+      " bleeding days. Check your dates. Save anyway?")) return;
+
+  const overlaps = periods.some(p => start <= p.end && end >= p.start);
+  if (overlaps && !confirm("This entry overlaps an existing period record. Save anyway?")) return;
+
+  periods.push({
+    id: String(Date.now()) + Math.random().toString(16).slice(2),
+    start, end,
+    flow: document.getElementById("flow").value,
+    symptoms: [...document.querySelectorAll('input[name="symptom"]:checked')].map(x => x.value),
+    notes: document.getElementById("notes").value.trim()
+  });
+  savePeriods();
+  document.getElementById("saveMessage").textContent = "Period saved successfully!";
+  event.target.reset();
+});
+
+document.getElementById("clearHistory").addEventListener("click", () => {
+  if (confirm("Delete all period history from this browser?")) {
+    periods = [];
+    savePeriods();
+  }
+});
+
+document.getElementById("predictionForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const result = document.getElementById("predictionResult");
+  result.classList.remove("hidden");
+  result.textContent = "Calculating estimate...";
+  const payload = {
+    age: Number(document.getElementById("age").value),
+    cycle: Number(document.getElementById("cycle").value),
+    duration: Number(document.getElementById("duration").value),
+    weightGain: Number(document.getElementById("weightGain").value),
+    hairGrowth: Number(document.getElementById("hairGrowth").value),
+    skin: Number(document.getElementById("skin").value),
+    hairLoss: Number(document.getElementById("hairLoss").value),
+    pimples: Number(document.getElementById("pimples").value),
+    fastFood: Number(document.getElementById("fastFood").value),
+    exercise: Number(document.getElementById("exercise").value)
+  };
+  try {
+    const response = await fetch("/predict", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Prediction failed.");
+    result.textContent = data.message;
+  } catch (error) {
+    result.textContent = "Could not calculate the estimate: " + error.message;
+  }
+});
+
+renderPeriods();
+
+function drawCycleChart() {
+  const canvas = document.getElementById("cycleChart");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const scale = window.devicePixelRatio || 1;
+  const width = canvas.clientWidth || 600;
+  const height = 230;
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  ctx.scale(scale, scale);
+  ctx.clearRect(0, 0, width, height);
+
+  const starts = [...new Set(periods.map(p => p.start))].sort();
+  const values = [];
+  for (let i = 1; i < starts.length; i++) {
+    values.push({
+      label: starts[i],
+      days: daysBetween(starts[i - 1], starts[i])
+    });
+  }
+
+  if (!values.length) {
+    ctx.fillStyle = "#806b7b";
+    ctx.font = "14px Arial";
+    ctx.fillText("Record two or more period start dates to see your chart.", 10, 35);
+    return;
+  }
+
+  const pad = {left: 38, right: 14, top: 18, bottom: 42};
+  const plotW = width - pad.left - pad.right;
+  const plotH = height - pad.top - pad.bottom;
+  const maxVal = Math.max(35, ...values.map(v => v.days)) * 1.15;
+
+  ctx.font = "11px Arial";
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + plotH * i / 4;
+    ctx.strokeStyle = "#f0dfe7";
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(width - pad.right, y); ctx.stroke();
+    ctx.fillStyle = "#806b7b";
+    ctx.fillText(Math.round(maxVal * (1 - i / 4)), 4, y + 4);
+  }
+
+  const points = values.map((v, i) => ({
+    x: values.length === 1 ? pad.left + plotW / 2 : pad.left + i * plotW / (values.length - 1),
+    y: pad.top + plotH * (1 - v.days / maxVal),
+    ...v
+  }));
+
+  ctx.strokeStyle = "#b86f92";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  points.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+  ctx.stroke();
+
+  points.forEach(p => {
+    ctx.fillStyle = "#a6587f";
+    ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#5d4054";
+    ctx.fillText(p.days + "d", Math.min(p.x + 5, width - 35), p.y - 8);
+    ctx.fillStyle = "#806b7b";
+    ctx.save();
+    ctx.translate(p.x, height - 8);
+    ctx.rotate(-0.25);
+    ctx.textAlign = "right";
+    ctx.fillText(p.label.slice(5), 0, 0);
+    ctx.restore();
+  });
+}
+
+const originalRenderPeriods = renderPeriods;
+renderPeriods = function() {
+  originalRenderPeriods();
+  drawCycleChart();
+};
+
+document.getElementById("useDiarySymptoms")?.addEventListener("click", () => {
+  const message = document.getElementById("syncMessage");
+  if (!periods.length) {
+    message.textContent = "No diary entries found in this website yet. Add a period entry first.";
+    return;
+  }
+
+  const latest = [...periods].sort((a, b) => b.start.localeCompare(a.start))[0];
+  const symptoms = latest.symptoms || [];
+  const has = term => symptoms.some(s => s.toLowerCase().includes(term));
+
+  document.getElementById("hairGrowth").value = has("hair growth") ? "1" : "0";
+  document.getElementById("hairLoss").value = has("hair loss") ? "1" : "0";
+  document.getElementById("pimples").value = has("acne") ? "1" : "";
+
+  message.textContent =
+    "Suggested from your latest diary entry (" + latest.start +
+    "). Excess hair growth and hair loss were mapped to matching fields. " +
+    "Acne was mapped to pimples only as a suggestion. Please review every field; " +
+    "unrecorded symptoms are not automatically treated as absent.";
+});
+
+window.addEventListener("resize", drawCycleChart);
+drawCycleChart();
+
+</script>
+</body>
+</html>
